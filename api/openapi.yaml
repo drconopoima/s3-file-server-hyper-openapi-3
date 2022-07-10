@@ -1,0 +1,463 @@
+openapi: 3.0.0
+info:
+  license:
+    name: MIT
+  title: File Sharing API Service
+  version: 0.1.0
+servers:
+- url: http://localhost:8000/v1
+paths:
+  /files:
+    get:
+      operationId: listFiles
+      parameters:
+      - description: How many items to return at one time (max 100)
+        explode: true
+        in: query
+        name: limit
+        required: false
+        schema:
+          format: int32
+          type: integer
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Files'
+          description: A paged array of files
+          headers:
+            x-next:
+              description: A link to the next page of responses
+              explode: false
+              schema:
+                type: string
+              style: simple
+        "401":
+          description: Authentication information is missing or invalid
+          headers:
+            WWW_Authenticate:
+              explode: false
+              schema:
+                type: string
+              style: simple
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unexpected error
+      summary: List all files
+      tags:
+      - files
+    post:
+      operationId: createFile
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/File'
+        description: File Object Information
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              examples:
+                v1:
+                  value:
+                    Status: creating
+                    CreationTime: 2022-06-19T10:52:00Z
+                    FileId: aafb42c4-a344-45af-9701-c745d3a2b3c5
+                    OwnerId: 7bba4642-bf32-48b8-a41b-28a3750c1c3b
+                    Tags: []
+              schema:
+                $ref: '#/components/schemas/File'
+          description: Successful file object metadata creation request
+        "201":
+          description: Null response
+        "401":
+          description: Authentication information is missing or invalid
+          headers:
+            WWW_Authenticate:
+              explode: false
+              schema:
+                type: string
+              style: simple
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unexpected error
+      summary: Create a file object metadata
+      tags:
+      - files
+  /files/{fileId}:
+    delete:
+      operationId: deleteFileById
+      parameters:
+      - description: The id of the file object to delete
+        explode: false
+        in: path
+        name: fileId
+        required: true
+        schema:
+          format: uuid
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              examples:
+                v1:
+                  value:
+                    Status: deleting
+                    DeletionTime: 2022-06-19T10:52:00Z
+                    FileId: aafb42c4-a344-45af-9701-c745d3a2b3c5
+                    OwnerId: 7bba4642-bf32-48b8-a41b-28a3750c1c3b
+                    Tags: []
+              schema:
+                $ref: '#/components/schemas/File'
+          description: Delete file success response to a valid request
+        "401":
+          description: Authentication information is missing or invalid
+          headers:
+            WWW_Authenticate:
+              explode: false
+              schema:
+                type: string
+              style: simple
+      summary: Delete a file object content and metadata properties
+      tags:
+      - files
+    get:
+      operationId: getFileById
+      parameters:
+      - description: The id of the file object to retrieve
+        explode: false
+        in: path
+        name: fileId
+        required: true
+        schema:
+          format: uuid
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              examples:
+                v1:
+                  value:
+                    Status: available
+                    CreationTime: 2022-06-19T10:52:00Z
+                    FileId: aafb42c4-a344-45af-9701-c745d3a2b3c5
+                    OwnerId: 7bba4642-bf32-48b8-a41b-28a3750c1c3b
+                    Tags: []
+              schema:
+                $ref: '#/components/schemas/File'
+          description: Describe file success response to a valid request
+        "401":
+          description: Authentication information is missing or invalid
+          headers:
+            WWW_Authenticate:
+              explode: false
+              schema:
+                type: string
+              style: simple
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unexpected error
+      summary: Retrieve specific file object metadata properties
+      tags:
+      - files
+  /files/{fileId}/upload:
+    post:
+      operationId: uploadFile
+      parameters:
+      - description: The id of the file to upload
+        explode: false
+        in: path
+        name: fileId
+        required: true
+        schema:
+          format: uuid
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              examples:
+                v1:
+                  value:
+                    Status: updating
+                    UploadTime: 2022-06-19T10:52:00Z
+                    FileId: aafb42c4-a344-45af-9701-c745d3a2b3c5
+                    OwnerId: 7bba4642-bf32-48b8-a41b-28a3750c1c3b
+                    Tags: []
+              schema:
+                $ref: '#/components/schemas/File'
+          description: Successful file upload request
+        "201":
+          description: Null response
+        "401":
+          description: Authentication information is missing or invalid
+          headers:
+            WWW_Authenticate:
+              explode: false
+              schema:
+                type: string
+              style: simple
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unexpected error
+      summary: Upload a file
+      tags:
+      - files
+  /files/{fileId}/download:
+    get:
+      operationId: downloadFile
+      parameters:
+      - description: The id of the file to download
+        explode: false
+        in: path
+        name: fileId
+        required: true
+        schema:
+          format: uuid
+          type: string
+        style: simple
+      - explode: true
+        in: query
+        name: token
+        required: false
+        schema:
+          description: Token String to determine the authorization needed for file
+          type: string
+        style: form
+      responses:
+        "200":
+          content:
+            application/octet-stream:
+              schema:
+                format: binary
+                type: string
+          description: Download file success response to a valid request
+      summary: Download a file
+      tags:
+      - files
+  /files/{fileId}/recover:
+    post:
+      operationId: recoverFile
+      parameters:
+      - description: The id of the file object to recover
+        explode: false
+        in: path
+        name: fileId
+        required: true
+        schema:
+          format: uuid
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              examples:
+                v1:
+                  value:
+                    Status: recovering
+                    RecoverTime: 2022-06-19T10:52:00Z
+                    FileId: aafb42c4-a344-45af-9701-c745d3a2b3c5
+                    OwnerId: 7bba4642-bf32-48b8-a41b-28a3750c1c3b
+                    Tags: []
+              schema:
+                $ref: '#/components/schemas/File'
+          description: Successful recover deleted file request
+        "401":
+          description: Authentication information is missing or invalid
+          headers:
+            WWW_Authenticate:
+              explode: false
+              schema:
+                type: string
+              style: simple
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+      summary: Recovers a deleted file object content and metadata properties
+      tags:
+      - files
+  /files/{fileId}/share:
+    get:
+      operationId: createShareURL
+      parameters:
+      - description: The id of the file to retrieve
+        explode: false
+        in: path
+        name: fileId
+        required: true
+        schema:
+          format: uuid
+          type: string
+        style: simple
+      - explode: true
+        in: query
+        name: expires
+        required: false
+        schema:
+          description: Expiration date and time for file sharing URL
+          format: date-time
+          type: string
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              examples:
+                v1:
+                  value:
+                    Status: available
+                    ExpirationTime: 2022-06-19T10:52:00Z
+                    FileId: aafb42c4-a344-45af-9701-c745d3a2b3c5
+                    OwnerId: 7bba4642-bf32-48b8-a41b-28a3750c1c3b
+                    ShareURL: https://localhost:8000/v1/files/aafb42c4-a344-45af-9701-c745d3a2b3c5/download
+                    Tags: []
+              schema:
+                $ref: '#/components/schemas/File'
+          description: Successful generate shareable URL request
+        "401":
+          description: Authentication information is missing or invalid
+          headers:
+            WWW_Authenticate:
+              explode: false
+              schema:
+                type: string
+              style: simple
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+      summary: Generate a shareable URL for a file object
+      tags:
+      - files
+components:
+  responses:
+    UnauthorizedError:
+      description: Authentication information is missing or invalid
+      headers:
+        WWW_Authenticate:
+          explode: false
+          schema:
+            type: string
+          style: simple
+  schemas:
+    File:
+      example:
+        Status: available
+        OwnerId: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+        ShareURL: https://openapi-generator.tech
+        DeletionTime: 2000-01-23T04:56:07.000+00:00
+        CreationTime: 2000-01-23T04:56:07.000+00:00
+        FileId: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+        UploadTime: 2000-01-23T04:56:07.000+00:00
+        RecoverTime: 2000-01-23T04:56:07.000+00:00
+        ExpirationTime: 2000-01-23T04:56:07.000+00:00
+        Tags:
+        - Tags
+        - Tags
+      properties:
+        FileId:
+          format: uuid
+          type: string
+        Status:
+          enum:
+          - available
+          - creating
+          - deleted
+          - deleting
+          - error
+          - errorDeleting
+          - recovering
+          - updating
+          type: string
+        CreationTime:
+          format: date-time
+          type: string
+        UploadTime:
+          format: date-time
+          type: string
+        DeletionTime:
+          format: date-time
+          type: string
+        RecoverTime:
+          format: date-time
+          type: string
+        ExpirationTime:
+          format: date-time
+          type: string
+        OwnerId:
+          format: uuid
+          type: string
+        ShareURL:
+          format: uri
+          type: string
+        Tags:
+          items:
+            type: string
+          type: array
+      required:
+      - FileId
+      type: object
+    Files:
+      items:
+        $ref: '#/components/schemas/File'
+      type: array
+    Error:
+      properties:
+        code:
+          format: int32
+          type: integer
+        error_code:
+          enum:
+          - authorization_error
+          - external_service_timeout
+          - insufficient_access
+          - insufficient_scope
+          - invalid_json_input
+          - invalid_parameters
+          - invalid_request
+          - invalid_response
+          - invalid_token
+          - io_error
+          - method_not_allowed
+          - not_found
+          - resource_already_exists
+          - resource_not_found
+          - resource_temporarily_unavailable
+          - unauthorized
+          - unexpected_error
+          type: string
+        message:
+          type: string
+      required:
+      - code
+      - error_code
+      - message
+      type: object
+
